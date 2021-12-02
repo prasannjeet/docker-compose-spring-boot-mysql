@@ -1,9 +1,11 @@
-package com.bezkoder.spring.datajpa.controller;
+package com.prasannjeet.spring.datajpa.controller;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.prasannjeet.spring.datajpa.model.Tutorial;
+import com.prasannjeet.spring.datajpa.repository.TutorialRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bezkoder.spring.datajpa.model.Tutorial;
-import com.bezkoder.spring.datajpa.repository.TutorialRepository;
-
 @CrossOrigin(origins = "http://localhost:8081")
 @RestController
 @RequestMapping("/api")
@@ -32,12 +31,12 @@ public class TutorialController {
 	@GetMapping("/tutorials")
 	public ResponseEntity<List<Tutorial>> getAllTutorials(@RequestParam(required = false) String title) {
 		try {
-			List<Tutorial> tutorials = new ArrayList<Tutorial>();
+			List<Tutorial> tutorials = new ArrayList<>();
 
 			if (title == null)
-				tutorialRepository.findAll().forEach(tutorials::add);
+				tutorials.addAll(tutorialRepository.findAll());
 			else
-				tutorialRepository.findByTitleContaining(title).forEach(tutorials::add);
+				tutorials.addAll(tutorialRepository.findByTitleContaining(title));
 
 			if (tutorials.isEmpty()) {
 				return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -53,11 +52,8 @@ public class TutorialController {
 	public ResponseEntity<Tutorial> getTutorialById(@PathVariable("id") long id) {
 		Optional<Tutorial> tutorialData = tutorialRepository.findById(id);
 
-		if (tutorialData.isPresent()) {
-			return new ResponseEntity<>(tutorialData.get(), HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+		return tutorialData.map(tutorial -> new ResponseEntity<>(tutorial, HttpStatus.OK))
+				.orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
 	}
 
 	@PostMapping("/tutorials")
@@ -76,11 +72,11 @@ public class TutorialController {
 		Optional<Tutorial> tutorialData = tutorialRepository.findById(id);
 
 		if (tutorialData.isPresent()) {
-			Tutorial _tutorial = tutorialData.get();
-			_tutorial.setTitle(tutorial.getTitle());
-			_tutorial.setDescription(tutorial.getDescription());
-			_tutorial.setPublished(tutorial.isPublished());
-			return new ResponseEntity<>(tutorialRepository.save(_tutorial), HttpStatus.OK);
+			Tutorial currentTutorial = tutorialData.get();
+			currentTutorial.setTitle(tutorial.getTitle());
+			currentTutorial.setDescription(tutorial.getDescription());
+			currentTutorial.setPublished(tutorial.isPublished());
+			return new ResponseEntity<>(tutorialRepository.save(currentTutorial), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
